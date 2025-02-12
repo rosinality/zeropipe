@@ -1,0 +1,19 @@
+[project]
+name = "zeropipe"
+version = "0.0.1"
+description = "Experiments with Pipeline Parallelism"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Kim Seonghyeon", email = "kim.seonghyeon@outlook.com"}
+]
+dependencies = [
+]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
