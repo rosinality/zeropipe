@@ -284,14 +284,14 @@ def _add_time(config: ScheduleConfig, schedule: list[list[ScheduleNode]]):
                 prev_t = completion_time[prev_compute_node]
 
                 if node_map[prev_compute_node].stage != node.stage:
-                    prev_t = config.cost_comm
+                    prev_t += config.cost_comm
 
                 t = max(prev_t, t)
 
             compute_t = type_cost[node.type][node.stage]
             end_t = t + compute_t
             completion_time[node.key] = end_t
-            stage_current_t[stage] = end_t
+            stage_current_t[node.stage] = end_t
 
             new_schedule[node.stage].append(
                 dataclasses.replace(
