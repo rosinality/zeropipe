@@ -189,6 +189,7 @@ def visualize_schedule(output_path: str, schedule: list[list[ScheduleNode]]):
         FnType.F: "forward",
         FnType.B: "backward",
         FnType.W: "weight",
+        FnType.BW: "backward",
         FnType.SEND_FORWARD: "send",
         FnType.RECV_FORWARD: "recv",
         FnType.SEND_BACKWARD: "send",
@@ -215,6 +216,7 @@ def visualize_schedule(output_path: str, schedule: list[list[ScheduleNode]]):
         FnType.RECV_FORWARD: "Recv Forward",
         FnType.SEND_BACKWARD: "Send Backward",
         FnType.RECV_BACKWARD: "Recv Backward",
+        FnType.BW: "Backward and Weight",
     }
 
     for stage in schedule:
