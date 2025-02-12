@@ -74,6 +74,11 @@ class FnType(Enum):
         return pairs[self]
 
 
+class NodeChunk(Enum):
+    FIRST = 0
+    SECOND = 1
+
+
 class Direction(Enum):
     NEXT = 0
     PREV = 1
@@ -84,15 +89,12 @@ class NodeKey:
     type: FnType
     layer_group_index: int
     microbatch: int
-    seq_split_index: int
 
     def __post_init__(self):
         assert isinstance(self.type, FnType)
 
     def __hash__(self):
-        return hash(
-            (self.type, self.layer_group_index, self.microbatch, self.seq_split_index)
-        )
+        return hash((self.type, self.layer_group_index, self.microbatch))
 
 
 @dataclass(eq=True)
@@ -101,7 +103,6 @@ class ScheduleNode:
     stage: int
     microbatch: int
     chunk: int = 0
-    seq_split_index: int = 0
 
     layer_group_index: int | None = None
     start_time: int | None = None
@@ -128,7 +129,6 @@ class ScheduleNode:
             type=self.type,
             layer_group_index=self.layer_group_index,
             microbatch=self.microbatch,
-            seq_split_index=self.seq_split_index,
         )
 
     def get_prev_key(self, n_layer_groups: int):
@@ -140,9 +140,7 @@ class ScheduleNode:
 
             prev_layer_group_index = self.layer_group_index - 1
 
-            return NodeKey(
-                self.type, prev_layer_group_index, self.microbatch, self.seq_split_index
-            )
+            return NodeKey(self.type, prev_layer_group_index, self.microbatch)
 
         if self.type in {FnType.B, FnType.BW}:
             prev_layer_group_index = self.layer_group_index + 1
@@ -150,25 +148,16 @@ class ScheduleNode:
             assert prev_layer_group_index <= n_layer_groups
 
             if prev_layer_group_index == n_layer_groups:
-                return NodeKey(
-                    FnType.F,
-                    self.layer_group_index,
-                    self.microbatch,
-                    self.seq_split_index,
-                )
+                return NodeKey(FnType.F, self.layer_group_index, self.microbatch)
 
-            return NodeKey(
-                self.type, prev_layer_group_index, self.microbatch, self.seq_split_index
-            )
+            return NodeKey(self.type, prev_layer_group_index, self.microbatch)
 
         assert self.type == FnType.W
 
-        return NodeKey(
-            FnType.B, self.layer_group_index, self.microbatch, self.seq_split_index
-        )
+        return NodeKey(FnType.B, self.layer_group_index, self.microbatch)
 
     def get_activation_key(self):
-        return self.microbatch, self.chunk, self.seq_split_index
+        return self.microbatch, self.chunk
 
 
 @dataclass(eq=True, frozen=True)
@@ -248,7 +237,7 @@ def _add_time(config: ScheduleConfig, schedule: list[list[ScheduleNode]]):
         FnType.F: config.cost_forward,
         FnType.B: config.cost_backward,
         FnType.W: config.cost_weight,
-        FnType.BW: config.cost_backward + config.cost_weight,
+        FnType.BW: [b + w for b, w in zip(config.cost_backward, config.cost_weight)],
     }
 
     new_schedule = [[] for _ in schedule]
@@ -346,7 +335,6 @@ def _create_communication_node(
         chunk=compute_node.chunk,
         stage=compute_node.stage,
         microbatch=node.microbatch,
-        seq_split_index=node.seq_split_index,
         layer_group_index=compute_node.layer_group_index,
         start_time=t,
         complete_time=t,
