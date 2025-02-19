@@ -254,7 +254,7 @@ def visualize_schedule(output_path: str, schedule: list[list[ScheduleNode]]):
         <div class="time-marker" style="left: 25%">{round(max_time * 0.25)}ms</div>
         <div class="time-marker" style="left: 50%">{round(max_time * 0.5)}ms</div>
         <div class="time-marker" style="left: 75%">{round(max_time * 0.75)}ms</div>
-        <div class="time-marker" style="left: 100%">{max_time}ms</div>
+        <div class="time-marker" style="left: 100%">{round(max_time)}ms</div>
     </div>"""
 
     timestreams_str = "\n".join(timestreams)
